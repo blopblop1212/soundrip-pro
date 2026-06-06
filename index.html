@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoundRip Pro — Extraction Audio YouTube</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #666;
+    --success: #4ade80;
+    --error: #f87171;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,255,71,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,255,71,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow blob */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(232,255,71,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--accent);
+  }
+
+  .logo span { color: var(--text); }
+
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 80px 24px 60px;
+  }
+
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(64px, 10vw, 120px);
+    line-height: 0.9;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+
+  h1 .line1 { display: block; color: var(--text); }
+  h1 .line2 {
+    display: block;
+    color: var(--accent);
+    -webkit-text-stroke: 0px;
+  }
+
+  .hero-sub {
+    font-size: 15px;
+    color: var(--muted);
+    font-weight: 300;
+    max-width: 420px;
+    margin: 0 auto 48px;
+    line-height: 1.7;
+  }
+
+  /* MAIN CARD */
+  .converter-card {
+    position: relative;
+    z-index: 10;
+    max-width: 680px;
+    margin: 0 auto 60px;
+    padding: 0 24px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 40px;
+  }
+
+  /* URL Input Row */
+  .input-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 28px;
+  }
+
+  .url-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-right: none;
+    flex-shrink: 0;
+  }
+
+  .url-icon svg { width: 18px; height: 18px; fill: var(--accent); }
+
+  #urlInput {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-right: none;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 16px 18px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  #urlInput::placeholder { color: var(--muted); }
+  #urlInput:focus { border-color: var(--accent); }
+
+  #fetchBtn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 16px 24px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  #fetchBtn:hover { background: #fff; }
+  #fetchBtn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+  /* Options */
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .option-group label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .option-group select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 12px 14px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+
+  .option-group select:focus { border-color: var(--accent); }
+
+  /* Video Preview */
+  #videoPreview {
+    display: none;
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin-bottom: 28px;
+    background: var(--surface2);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .preview-inner {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  #thumbImg {
+    width: 120px;
+    height: 68px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .preview-info { flex: 1; min-width: 0; }
+
+  .preview-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .preview-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 16px;
+  }
+
+  .meta-item { display: flex; align-items: center; gap: 5px; }
+
+  /* Convert Button */
+  #convertBtn {
+    width: 100%;
+    background: transparent;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    padding: 18px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #convertBtn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+    z-index: -1;
+  }
+
+  #convertBtn:hover::before { transform: scaleX(1); }
+  #convertBtn:hover { color: #000; }
+  #convertBtn:disabled { border-color: var(--border); color: var(--muted); cursor: not-allowed; }
+  #convertBtn:disabled::before { display: none; }
+
+  /* Progress */
+  #progressSection {
+    display: none;
+    margin-top: 28px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  #progressStatus { color: var(--accent); }
+
+  .progress-bar-bg {
+    height: 3px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+
+  /* Steps */
+  .steps-row {
+    display: flex;
+    gap: 0;
+    margin-top: 20px;
+  }
+
+  .step {
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-left: none;
+    transition: all 0.3s;
+    text-transform: uppercase;
+  }
+
+  .step:first-child { border-left: 1px solid var(--border); }
+  .step.active { border-color: var(--accent); color: var(--accent); background: rgba(232,255,71,0.05); }
+  .step.done { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* Download */
+  #downloadSection {
+    display: none;
+    margin-top: 28px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .download-box {
+    border: 1px solid var(--success);
+    padding: 24px;
+    background: rgba(74,222,128,0.05);
+    text-align: center;
+  }
+
+  .download-box .dl-icon { font-size: 32px; margin-bottom: 12px; }
+  .download-box .dl-title { font-size: 14px; color: var(--success); margin-bottom: 6px; }
+  .download-box .dl-filename {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    word-break: break-all;
+  }
+
+  #downloadBtn {
+    background: var(--success);
+    color: #000;
+    border: none;
+    padding: 14px 40px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-block;
+    text-decoration: none;
+  }
+
+  #downloadBtn:hover { background: #fff; }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 18px;
+    border: 1px solid var(--error);
+    background: rgba(248,113,113,0.05);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--error);
+    animation: fadeIn 0.3s ease;
+  }
+
+  /* HISTORY */
+  .history-section {
+    position: relative;
+    z-index: 10;
+    max-width: 680px;
+    margin: 0 auto 80px;
+    padding: 0 24px;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  #clearHistory {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  #clearHistory:hover { border-color: var(--error); color: var(--error); }
+
+  #historyList { display: flex; flex-direction: column; gap: 1px; }
+
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    transition: border-color 0.2s;
+  }
+
+  .history-item:hover { border-color: var(--accent); }
+
+  .history-name {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+
+  .history-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .history-empty {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding: 40px;
+    border: 1px dashed var(--border);
+    letter-spacing: 1px;
+  }
+
+  /* FOOTER */
+  footer {
+    position: relative;
+    z-index: 10;
+    border-top: 1px solid var(--border);
+    padding: 24px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-note {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .footer-note span { color: var(--accent); }
+
+  /* Disclaimer banner */
+  .disclaimer {
+    position: relative;
+    z-index: 10;
+    background: rgba(232,255,71,0.05);
+    border-top: 1px solid rgba(232,255,71,0.2);
+    border-bottom: 1px solid rgba(232,255,71,0.2);
+    padding: 14px 48px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .disclaimer strong { color: var(--accent); }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 600px) {
+    header { padding: 20px 20px; }
+    .options-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 8px; text-align: center; }
+    .disclaimer { padding: 14px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Sound<span>Rip</span> Pro</div>
+  <div class="badge">Accès Professionnel</div>
+</header>
+
+<div class="disclaimer">
+  <strong>⚠ Usage professionnel uniquement</strong> — Cet outil est réservé aux contenus YouTube pour lesquels vous disposez d'une autorisation explicite du détenteur des droits.
+</div>
+
+<section class="hero">
+  <p class="hero-label">Extraction Audio Professionnelle</p>
+  <h1>
+    <span class="line1">YOUTUBE</span>
+    <span class="line2">→ MP3</span>
+  </h1>
+  <p class="hero-sub">Extrayez l'audio de vos vidéos YouTube autorisées en haute qualité, instantanément.</p>
+</section>
+
+<div class="converter-card">
+  <div class="card">
+
+    <!-- URL Input -->
+    <div class="input-row">
+      <div class="url-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21.58 7.19c-.23-.86-.92-1.54-1.79-1.77C18.25 5 12 5 12 5s-6.25 0-7.79.42c-.87.23-1.56.91-1.79 1.77C2 8.73 2 12 2 12s0 3.27.42 4.81c.23.86.92 1.54 1.79 1.77C5.75 19 12 19 12 19s6.25 0 7.79-.42c.87-.23 1.56-.91 1.79-1.77C22 15.27 22 12 22 12s0-3.27-.42-4.81zM10 15V9l5.2 3-5.2 3z"/></svg>
+      </div>
+      <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=..." />
+      <button id="fetchBtn" onclick="fetchVideoInfo()">ANALYSER</button>
+    </div>
+
+    <!-- Options -->
+    <div class="options-grid">
+      <div class="option-group">
+        <label>Qualité Audio</label>
+        <select id="quality">
+          <option value="320">320 kbps — Studio</option>
+          <option value="256">256 kbps — Haute</option>
+          <option value="192" selected>192 kbps — Standard</option>
+          <option value="128">128 kbps — Web</option>
+          <option value="96">96 kbps — Léger</option>
+        </select>
+      </div>
+      <div class="option-group">
+        <label>Format de sortie</label>
+        <select id="format">
+          <option value="mp3">MP3</option>
+          <option value="aac">AAC</option>
+          <option value="flac">FLAC</option>
+          <option value="wav">WAV</option>
+          <option value="ogg">OGG</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Video Preview -->
+    <div id="videoPreview">
+      <div class="preview-inner">
+        <img id="thumbImg" src="" alt="Miniature">
+        <div class="preview-info">
+          <div class="preview-title" id="previewTitle">—</div>
+          <div class="preview-meta">
+            <span class="meta-item">
+              <svg width="11" height="11" fill="#666" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+              <span id="previewChannel">—</span>
+            </span>
+            <span class="meta-item">
+              <svg width="11" height="11" fill="#666" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+              <span id="previewDuration">—</span>
+            </span>
+            <span class="meta-item">
+              <svg width="11" height="11" fill="#666" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              <span id="previewViews">—</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Convert Button -->
+    <button id="convertBtn" onclick="startConversion()" disabled>
+      EXTRAIRE L'AUDIO
+    </button>
+
+    <!-- Progress -->
+    <div id="progressSection">
+      <div class="progress-label">
+        <span id="progressStatus">Initialisation...</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <div class="steps-row">
+        <div class="step" id="step1">Connexion</div>
+        <div class="step" id="step2">Extraction</div>
+        <div class="step" id="step3">Conversion</div>
+        <div class="step" id="step4">Finalisation</div>
+      </div>
+    </div>
+
+    <!-- Download -->
+    <div id="downloadSection">
+      <div class="download-box">
+        <div class="dl-icon">🎵</div>
+        <div class="dl-title">Fichier prêt au téléchargement</div>
+        <div class="dl-filename" id="dlFilename">—</div>
+        <a id="downloadBtn" href="#" download>TÉLÉCHARGER</a>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-msg" id="errorMsg">—</div>
+
+  </div>
+</div>
+
+<!-- History -->
+<div class="history-section">
+  <div class="section-header">
+    <span class="section-title">Historique de session</span>
+    <button id="clearHistory" onclick="clearHistory()">Effacer</button>
+  </div>
+  <div id="historyList">
+    <div class="history-empty">Aucune extraction dans cette session</div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-note">SoundRip Pro — <span>Usage professionnel autorisé uniquement</span></div>
+  <div class="footer-note" id="sessionCount">0 extraction(s) cette session</div>
+</footer>
+
+<script>
+  let videoData = null;
+  let sessionHistory = [];
+  let sessionCount = 0;
+
+  // --- Parse YouTube URL ---
+  function extractVideoId(url) {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+    ];
+    for (const p of patterns) {
+      const m = url.match(p);
+      if (m) return m[1];
+    }
+    return null;
+  }
+
+  // --- Format duration ---
+  function formatDuration(seconds) {
+    if (!seconds) return '—';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    return `${m}:${String(s).padStart(2,'0')}`;
+  }
+
+  // --- Format views ---
+  function formatViews(n) {
+    if (!n) return '—';
+    if (n >= 1000000) return (n/1000000).toFixed(1) + 'M vues';
+    if (n >= 1000) return (n/1000).toFixed(0) + 'K vues';
+    return n + ' vues';
+  }
+
+  // --- Show error ---
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = '⚠ ' + msg;
+    el.style.display = 'block';
+  }
+
+  function hideError() {
+    document.getElementById('errorMsg').style.display = 'none';
+  }
+
+  // ── Config ──────────────────────────────────────
+  const API = 'http://localhost:5000/api';
+  let currentJobId = null;
+  let pollInterval = null;
+
+  // ── Fetch video info via backend ─────────────────
+  async function fetchVideoInfo() {
+    hideError();
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) { showError('Veuillez entrer une URL YouTube.'); return; }
+
+    const videoId = extractVideoId(url);
+    if (!videoId) { showError('URL YouTube invalide. Vérifiez le lien.'); return; }
+
+    const btn = document.getElementById('fetchBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>ANALYSE...';
+
+    document.getElementById('videoPreview').style.display = 'none';
+    document.getElementById('convertBtn').disabled = true;
+    document.getElementById('downloadSection').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'none';
+
+    try {
+      const res = await fetch(`${API}/info`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+
+      videoData = {
+        id: data.id,
+        title: data.title,
+        channel: data.channel,
+        thumbnail: data.thumbnail || `https://img.youtube.com/vi/${data.id}/mqdefault.jpg`,
+        duration: data.duration,
+        views: data.views,
+      };
+
+      document.getElementById('thumbImg').src = videoData.thumbnail;
+      document.getElementById('previewTitle').textContent = videoData.title;
+      document.getElementById('previewChannel').textContent = videoData.channel;
+      document.getElementById('previewDuration').textContent = formatDuration(videoData.duration);
+      document.getElementById('previewViews').textContent = formatViews(videoData.views);
+      document.getElementById('videoPreview').style.display = 'block';
+      document.getElementById('convertBtn').disabled = false;
+
+    } catch (e) {
+      showError(e.message || 'Impossible de contacter le serveur. Vérifiez que le backend tourne sur le port 5000.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'ANALYSER';
+    }
+  }
+
+  // ── Start conversion ──────────────────────────────
+  async function startConversion() {
+    if (!videoData) return;
+
+    document.getElementById('convertBtn').disabled = true;
+    document.getElementById('fetchBtn').disabled = true;
+    document.getElementById('downloadSection').style.display = 'none';
+    hideError();
+
+    document.getElementById('progressSection').style.display = 'block';
+    resetSteps();
+    setStep(0);
+
+    const url     = document.getElementById('urlInput').value.trim();
+    const quality = document.getElementById('quality').value;
+    const format  = document.getElementById('format').value;
+
+    try {
+      const res = await fetch(`${API}/convert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, quality, format }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur lors du lancement de la conversion');
+
+      currentJobId = data.job_id;
+      pollProgress(quality, format);
+
+    } catch (e) {
+      showError(e.message);
+      document.getElementById('convertBtn').disabled = false;
+      document.getElementById('fetchBtn').disabled = false;
+    }
+  }
+
+  // ── Poll progress ─────────────────────────────────
+  function pollProgress(quality, format) {
+    if (pollInterval) clearInterval(pollInterval);
+
+    pollInterval = setInterval(async () => {
+      try {
+        const res  = await fetch(`${API}/status/${currentJobId}`);
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error);
+
+        // Mise à jour de la barre
+        const pct = data.progress || 0;
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressPct').textContent = pct + '%';
+
+        // Mise à jour des étapes selon progression
+        if (pct < 20)       { setStep(0); document.getElementById('progressStatus').textContent = 'Connexion au flux...'; }
+        else if (pct < 50)  { setStep(1); document.getElementById('progressStatus').textContent = 'Extraction de l\'audio...'; }
+        else if (pct < 85)  { setStep(2); document.getElementById('progressStatus').textContent = 'Conversion en cours...'; }
+        else if (pct < 100) { setStep(3); document.getElementById('progressStatus').textContent = 'Finalisation...'; }
+
+        if (data.status === 'done') {
+          clearInterval(pollInterval);
+          onConversionDone(data.filename, quality, format);
+        } else if (data.status === 'error') {
+          clearInterval(pollInterval);
+          showError(data.error || 'Erreur lors de la conversion.');
+          document.getElementById('convertBtn').disabled = false;
+          document.getElementById('fetchBtn').disabled = false;
+        }
+      } catch (e) {
+        clearInterval(pollInterval);
+        showError('Connexion perdue avec le serveur.');
+        document.getElementById('convertBtn').disabled = false;
+        document.getElementById('fetchBtn').disabled = false;
+      }
+    }, 800);
+  }
+
+  // ── Steps helpers ─────────────────────────────────
+  const STEPS = ['step1', 'step2', 'step3', 'step4'];
+
+  function resetSteps() {
+    STEPS.forEach(id => {
+      document.getElementById(id).classList.remove('active', 'done');
+    });
+  }
+
+  function setStep(index) {
+    STEPS.forEach((id, i) => {
+      const el = document.getElementById(id);
+      el.classList.remove('active', 'done');
+      if (i < index)       el.classList.add('done');
+      else if (i === index) el.classList.add('active');
+    });
+  }
+
+  // ── On conversion done ────────────────────────────
+  function onConversionDone(filename, quality, format) {
+    setStep(4); // Marque toutes les étapes comme done
+    STEPS.forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove('active');
+      el.classList.add('done');
+    });
+    document.getElementById('progressStatus').textContent = 'Terminé !';
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressPct').textContent = '100%';
+
+    document.getElementById('dlFilename').textContent = filename;
+
+    const dlBtn = document.getElementById('downloadBtn');
+    dlBtn.href = `${API}/download/${currentJobId}`;
+    dlBtn.removeAttribute('download'); // Le backend gère le header Content-Disposition
+
+    document.getElementById('downloadSection').style.display = 'block';
+    document.getElementById('fetchBtn').disabled = false;
+
+    addToHistory(videoData.title, videoData.channel, quality, format);
+  }
+
+  function addToHistory(title, channel, quality, format) {
+    sessionCount++;
+    document.getElementById('sessionCount').textContent = `${sessionCount} extraction(s) cette session`;
+
+    const now = new Date();
+    const time = now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+
+    sessionHistory.unshift({ title, channel, quality, format, time });
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    if (sessionHistory.length === 0) {
+      list.innerHTML = '<div class="history-empty">Aucune extraction dans cette session</div>';
+      return;
+    }
+    list.innerHTML = sessionHistory.map(item => `
+      <div class="history-item">
+        <div class="history-name">🎵 ${item.title}</div>
+        <div class="history-meta">${item.quality}kbps · ${item.format.toUpperCase()} · ${item.time}</div>
+      </div>
+    `).join('');
+  }
+
+  function clearHistory() {
+    sessionHistory = [];
+    renderHistory();
+  }
+
+  // Enter key on input
+  document.getElementById('urlInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') fetchVideoInfo();
+  });
+</script>
+</body>
+</html>
