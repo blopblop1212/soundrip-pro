@@ -47,7 +47,8 @@ def info():
     if not url:
         return jsonify({"error": "URL manquante"}), 400
     try:
-        with yt_dlp.YoutubeDL({"quiet": True, "skip_download": True, "noplaylist": True}) as ydl:
+        with yt_dlp.YoutubeDL({"quiet": True, "skip_download": True, 
+                        "noplaylist": True, "cookiefile": "cookies.txt"}) as ydl:
             d = ydl.extract_info(url, download=False)
         return jsonify({
             "id":        d.get("id"),
@@ -99,6 +100,8 @@ def _convert(job_id, url, quality, fmt):
         "quiet": True,
         "progress_hooks": [hook],
         "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": codec[fmt], "preferredquality": quality}],
+         "format": "bestaudio/best",
+        "cookiefile": "cookies.txt",
     }
 
     try:
